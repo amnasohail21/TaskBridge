@@ -1,12 +1,21 @@
-import { addDoc, collection, getDocs } from 'firebase/firestore';
+import { useRouter } from 'expo-router';
+import { collection, doc, getDocs, updateDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { db } from '../firebaseConfig'; // Make sure you’ve exported `db` from firebaseConfig
-
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { auth, db } from '../firebaseConfig';
 
 export default function FavorFeedScreen() {
   const [favors, setFavors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter(); 
 
   useEffect(() => {
     const fetchFavors = async () => {
@@ -15,37 +24,41 @@ export default function FavorFeedScreen() {
         const favorList = favorSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setFavors(favorList);
       } catch (error) {
-        console.error("Error fetching favors:", error);
+        console.error('Error fetching favors:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchFavors();
+    fetchFavors(); 
   }, []);
-  
-  const handlePostFavor = async () => {
+
+
+  const handleAcceptFavor = async (favorId: string) => {
     try {
-      const docRef = await addDoc(collection(db, 'favors'), {
-        title: 'Car broke down',
-        description: 'My car stopped working on Main Street. Need urgent help!',
-        location: {
-          lat: 43.6532,
-          lng: -79.3832, // Example: Toronto coords; use real coords or user input
-        },
-        createdAt: new Date(),
-        status: 'open',
-        postedBy: 'amna786@gmail.com', // Ideally the current user’s ID/email
+      const user = auth.currentUser;
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in to accept a favor.');
+        return;
+      }
+  
+      const favorRef = doc(db, 'favors', favorId);
+      await updateDoc(favorRef, {
+        status: 'in_progress',
+        acceptedBy: user.email, // or user.uid
       });
   
-      console.log('Favor posted with ID:', docRef.id);
-      Alert.alert('Success', 'Favor posted!');
+      Alert.alert('Favor accepted!', 'You have taken up the favor.');
+      
+      // Refresh the list
+      const favorSnapshot = await getDocs(collection(db, 'favors'));
+      const favorList = favorSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setFavors(favorList);
     } catch (error) {
-      console.error('Error posting favor:', error);
-      Alert.alert('Error', 'Failed to post favor');
+      console.error('Error accepting favor:', error);
+      Alert.alert('Error', 'Could not accept favor.');
     }
   };
-  
 
   const renderFavor = ({ item }: { item: any }) => (
     <View style={styles.card}>
@@ -67,6 +80,13 @@ export default function FavorFeedScreen() {
         renderItem={renderFavor}
         contentContainerStyle={{ padding: 16 }}
       />
+
+      <TouchableOpacity
+        style={[styles.button, { marginHorizontal: 16, marginTop: 20 }]}
+        onPress={() => router.push('/postfavor')} // make sure file is PostFavor.tsx
+      >
+        <Text style={styles.buttonText}>Post a Favor</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -82,10 +102,10 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: 'bold', color: '#111827' },
   details: { fontSize: 14, color: '#4B5563', marginTop: 4 },
   button: {
-    marginTop: 12,
+    marginTop: 5,
     backgroundColor: '#2563EB',
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 6,
+    borderRadius: 4,
   },
   buttonText: { color: '#fff', textAlign: 'center', fontWeight: '600' },
 });
