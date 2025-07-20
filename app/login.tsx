@@ -1,3 +1,5 @@
+import { useRouter } from 'expo-router';
+
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -13,10 +15,13 @@ import {
 } from 'react-native';
 import { auth } from '../firebaseConfig'; // Make sure this exports initialized Firebase auth
 
+
+
 export default function EmailAuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSigningUp, setIsSigningUp] = useState(false);
+  const router = useRouter();
 
   const handleSignUp = async () => {
     if (!email || !password) {
@@ -51,11 +56,15 @@ export default function EmailAuthScreen() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("Login success:", userCredential.user);
       Alert.alert('Success', 'Logged in!');
+  
+      // Navigate to the favor feed screen (e.g., "/favors" or whatever path you choose)
+      router.push('/favor');
     } catch (error: any) {
       console.log("Login error:", error.code, error.message);
       Alert.alert('Error', error.message);
     }
   };
+  
   
   
   
