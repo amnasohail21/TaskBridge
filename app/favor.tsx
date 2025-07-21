@@ -59,20 +59,27 @@ export default function FavorFeedScreen() {
   };
 
   const renderFavor = ({ item }: { item: any }) => {
-    if (item.status !== 'open') return null;
     return (
       <View style={styles.card}>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.details}>{item.description}</Text>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => handleAcceptFavor(item.id)}
-        >
-          <Text style={styles.buttonText}>I'll do it</Text>
-        </TouchableOpacity>
+  
+        {item.status === 'open' ? (
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => handleAcceptFavor(item.id)}
+          >
+            <Text style={styles.buttonText}>I'll do it</Text>
+          </TouchableOpacity>
+        ) : (
+          <Text style={styles.inProgress}>
+            In Progress by: {item.acceptedBy || 'Someone'}
+          </Text>
+        )}
       </View>
     );
   };
+  
 
   if (loading) return <ActivityIndicator size="large" style={{ marginTop: 100 }} />;
 
@@ -119,4 +126,12 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   buttonText: { color: '#fff', textAlign: 'center', fontWeight: '600' },
+
+  inProgress: {
+    marginTop: 8,
+    fontStyle: 'italic',
+    color: '#F59E0B', // amber-500
+    fontSize: 14,
+  },
+  
 });
