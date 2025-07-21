@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -105,28 +106,33 @@ export default function FavorFeedScreen() {
             In Progress by: {item.acceptedBy || 'Someone'}
           </Text>
         ) : (
-          <TouchableOpacity
-            style={styles.button}
+          <Pressable
+            android_ripple={{ color: '#bbdefb' }}
+            style={({ pressed }) => [
+              styles.button,
+              pressed && styles.buttonPressed,
+            ]}
             onPress={() => handleAcceptFavor(item.id)}
           >
             <Text style={styles.buttonText}>I'll do it</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
 
         {isPoster && item.status === 'in_progress' && (
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: '#059669', marginTop: 8 }]}
+          <Pressable
+            android_ripple={{ color: '#34d399' }}
+            style={[styles.button, styles.completeButton]}
             onPress={() => handleCompleteFavor(item.id)}
           >
             <Text style={styles.buttonText}>Mark as Completed</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
     );
   };
 
   if (loading)
-    return <ActivityIndicator size="large" style={{ marginTop: 100 }} />;
+    return <ActivityIndicator size="large" style={{ marginTop: 100 }} color="#2563EB" />;
 
   return (
     <View style={styles.container}>
@@ -134,52 +140,113 @@ export default function FavorFeedScreen() {
         data={favors}
         keyExtractor={item => item.id}
         renderItem={renderFavor}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 80 }}
+        showsVerticalScrollIndicator={false}
       />
 
-      <TouchableOpacity
-        style={[styles.button, { marginHorizontal: 16, marginTop: 20 }]}
-        onPress={() => router.push('/postfavor')}
-      >
-        <Text style={styles.buttonText}>Post a Favor</Text>
-      </TouchableOpacity>
+      <View style={styles.footerButtons}>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => router.push('/postfavor')}
+        >
+          <Text style={styles.primaryButtonText}>Post a Favor</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.button, { marginHorizontal: 16, marginTop: 10 }]}
-        onPress={() => router.push('/profile')}
-      >
-        <Text style={styles.buttonText}>Go to Profile</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => router.push('/profile')}
+        >
+          <Text style={styles.secondaryButtonText}>Go to Profile</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#f5f7fa' },
+
   card: {
-    backgroundColor: '#F3F4F6',
-    padding: 16,
-    borderRadius: 10,
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 16,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  title: { fontSize: 18, fontWeight: 'bold', color: '#111827' },
-  details: { fontSize: 14, color: '#4B5563', marginTop: 4 },
+
+  title: { fontSize: 20, fontWeight: '700', color: '#111827', marginBottom: 6 },
+  details: { fontSize: 15, color: '#4B5563', marginBottom: 14 },
+
   button: {
-    marginTop: 5,
-    backgroundColor: '#2563EB',
-    paddingVertical: 6,
-    borderRadius: 4,
+    backgroundColor: '#3B82F6', // blue-500
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 6,
   },
-  buttonText: { color: '#fff', textAlign: 'center', fontWeight: '600' },
+  buttonPressed: {
+    backgroundColor: '#2563EB', // darker blue on press
+  },
+  completeButton: {
+    backgroundColor: '#10B981', // green-500
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+
   inProgress: {
     marginTop: 8,
     fontStyle: 'italic',
-    color: '#F59E0B',
+    color: '#F59E0B', // amber-500
     fontSize: 14,
   },
   completedText: {
     marginTop: 8,
-    color: '#10B981',
+    color: '#10B981', // green-500
     fontWeight: '600',
+    fontSize: 16,
+  },
+
+  footerButtons: {
+    position: 'absolute',
+    bottom: 20,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+
+  primaryButton: {
+    backgroundColor: '#2563EB',
+    flex: 1,
+    marginRight: 10,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+
+  secondaryButton: {
+    backgroundColor: '#E5E7EB',
+    flex: 1,
+    marginLeft: 10,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: '#374151',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
