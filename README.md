@@ -2,7 +2,7 @@
 
 
 
-                             TaskBridge is your local favor-sharing community — powered by trust, kindness, and real-time tech.
+                        TaskBridge is your local favor-sharing community — powered by trust, kindness, and real-time tech.
 
 
 
