@@ -1,6 +1,12 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { collection, doc, getDocs, updateDoc } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import {
+  collection,
+  doc,
+  getDocs,
+  updateDoc,
+} from 'firebase/firestore';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -8,30 +14,35 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import { auth, db } from '../firebaseConfig';
 
 export default function FavorFeedScreen() {
   const [favors, setFavors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter(); 
+  const router = useRouter();
 
-  useEffect(() => {
-    const fetchFavors = async () => {
-      try {
-        const favorSnapshot = await getDocs(collection(db, 'favors'));
-        const favorList = favorSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setFavors(favorList);
-      } catch (error) {
-        console.error('Error fetching favors:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchFavors = async () => {
+        try {
+          const favorSnapshot = await getDocs(collection(db, 'favors'));
+          const favorList = favorSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setFavors(favorList);
+        } catch (error) {
+          console.error('Error fetching favors:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    fetchFavors(); 
-  }, []);
+      fetchFavors();
+    }, [])
+  );
 
   const handleAcceptFavor = async (favorId: string) => {
     try {
@@ -48,9 +59,12 @@ export default function FavorFeedScreen() {
       });
 
       Alert.alert('Favor accepted!', 'You have taken up the favor.');
-      
+
       const favorSnapshot = await getDocs(collection(db, 'favors'));
-      const favorList = favorSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const favorList = favorSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
       setFavors(favorList);
     } catch (error) {
       console.error('Error accepting favor:', error);
@@ -58,30 +72,61 @@ export default function FavorFeedScreen() {
     }
   };
 
+  const handleCompleteFavor = async (favorId: string) => {
+    try {
+      const favorRef = doc(db, 'favors', favorId);
+      await updateDoc(favorRef, {
+        status: 'completed',
+      });
+      Alert.alert('Success', 'Favor marked as completed.');
+
+      const favorSnapshot = await getDocs(collection(db, 'favors'));
+      const favorList = favorSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setFavors(favorList);
+    } catch (error) {
+      console.error('Error completing favor:', error);
+      Alert.alert('Error', 'Could not complete favor.');
+    }
+  };
+
   const renderFavor = ({ item }: { item: any }) => {
+    const user = auth.currentUser;
+    const isPoster = user?.email === item.postedBy;
+
     return (
       <View style={styles.card}>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.details}>{item.description}</Text>
-  
-        {item.status === 'open' ? (
+
+        {item.status === 'completed' ? (
+          <Text style={styles.completedText}>✅ Completed</Text>
+        ) : item.status === 'in_progress' ? (
+          <Text style={styles.inProgress}>
+            In Progress by: {item.acceptedBy || 'Someone'}
+          </Text>
+        ) : (
           <TouchableOpacity
             style={styles.button}
             onPress={() => handleAcceptFavor(item.id)}
           >
             <Text style={styles.buttonText}>I'll do it</Text>
           </TouchableOpacity>
-        ) : (
-          <Text style={styles.inProgress}>
-            In Progress by: {item.acceptedBy || 'Someone'}
-          </Text>
+        )}
+
+        {isPoster && item.status === 'in_progress' && (
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#059669', marginTop: 8 }]}
+            onPress={() => handleCompleteFavor(item.id)}
+          >
+            <Text style={styles.buttonText}>Mark as Completed</Text>
+          </TouchableOpacity>
         )}
       </View>
     );
   };
-  
 
-  if (loading) return <ActivityIndicator size="large" style={{ marginTop: 100 }} />;
+  if (loading)
+    return <ActivityIndicator size="large" style={{ marginTop: 100 }} />;
 
   return (
     <View style={styles.container}>
@@ -101,7 +146,7 @@ export default function FavorFeedScreen() {
 
       <TouchableOpacity
         style={[styles.button, { marginHorizontal: 16, marginTop: 10 }]}
-        onPress={() => router.push('/profile')} // <-- navigation to Profile screen
+        onPress={() => router.push('/profile')}
       >
         <Text style={styles.buttonText}>Go to Profile</Text>
       </TouchableOpacity>
@@ -126,12 +171,15 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   buttonText: { color: '#fff', textAlign: 'center', fontWeight: '600' },
-
   inProgress: {
     marginTop: 8,
     fontStyle: 'italic',
-    color: '#F59E0B', // amber-500
+    color: '#F59E0B',
     fontSize: 14,
   },
-  
+  completedText: {
+    marginTop: 8,
+    color: '#10B981',
+    fontWeight: '600',
+  },
 });
