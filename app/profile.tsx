@@ -1,3 +1,4 @@
+import { signOut } from 'firebase/auth';
 import {
   collection,
   getDocs,
@@ -6,6 +7,7 @@ import {
 } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -54,10 +56,14 @@ export default function ProfileScreen() {
     fetchData();
   }, []);
 
-
-
-
-
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      Alert.alert('Success', 'Logged out');
+    } catch (err: any) {
+      Alert.alert('Error', err.message);
+    }
+  };
 
   return (
     <View style={styles.container}>
