@@ -33,7 +33,6 @@ export default function FavorFeedScreen() {
     fetchFavors(); 
   }, []);
 
-
   const handleAcceptFavor = async (favorId: string) => {
     try {
       const user = auth.currentUser;
@@ -41,16 +40,15 @@ export default function FavorFeedScreen() {
         Alert.alert('Error', 'You must be logged in to accept a favor.');
         return;
       }
-  
+
       const favorRef = doc(db, 'favors', favorId);
       await updateDoc(favorRef, {
         status: 'in_progress',
-        acceptedBy: user.email, // or user.uid
+        acceptedBy: user.email,
       });
-  
+
       Alert.alert('Favor accepted!', 'You have taken up the favor.');
       
-      // Refresh the list
       const favorSnapshot = await getDocs(collection(db, 'favors'));
       const favorList = favorSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setFavors(favorList);
@@ -61,8 +59,7 @@ export default function FavorFeedScreen() {
   };
 
   const renderFavor = ({ item }: { item: any }) => {
-    if (item.status !== 'open') return null; // Only show open favors
-  
+    if (item.status !== 'open') return null;
     return (
       <View style={styles.card}>
         <Text style={styles.title}>{item.title}</Text>
@@ -76,7 +73,6 @@ export default function FavorFeedScreen() {
       </View>
     );
   };
-  
 
   if (loading) return <ActivityIndicator size="large" style={{ marginTop: 100 }} />;
 
@@ -91,9 +87,16 @@ export default function FavorFeedScreen() {
 
       <TouchableOpacity
         style={[styles.button, { marginHorizontal: 16, marginTop: 20 }]}
-        onPress={() => router.push('/postfavor')} // make sure file is PostFavor.tsx
+        onPress={() => router.push('/postfavor')}
       >
         <Text style={styles.buttonText}>Post a Favor</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.button, { marginHorizontal: 16, marginTop: 10 }]}
+        onPress={() => router.push('/profile')} // <-- navigation to Profile screen
+      >
+        <Text style={styles.buttonText}>Go to Profile</Text>
       </TouchableOpacity>
     </View>
   );
