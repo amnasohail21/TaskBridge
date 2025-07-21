@@ -60,15 +60,23 @@ export default function FavorFeedScreen() {
     }
   };
 
-  const renderFavor = ({ item }: { item: any }) => (
-    <View style={styles.card}>
-      <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.details}>{item.description}</Text>
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>I'll do it</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const renderFavor = ({ item }: { item: any }) => {
+    if (item.status !== 'open') return null; // Only show open favors
+  
+    return (
+      <View style={styles.card}>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.details}>{item.description}</Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => handleAcceptFavor(item.id)}
+        >
+          <Text style={styles.buttonText}>I'll do it</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+  
 
   if (loading) return <ActivityIndicator size="large" style={{ marginTop: 100 }} />;
 
