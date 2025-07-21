@@ -1,8 +1,10 @@
+import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { addDoc, collection } from 'firebase/firestore';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -14,7 +16,48 @@ import { auth, db } from '../firebaseConfig';
 export default function PostFavorScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    async function fetchLocation() {
+      if (Platform.OS === 'web') {
+        if ('geolocation' in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              setLocation({
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+              });
+              console.log('Web location set:', pos.coords);
+            },
+            (err) => {
+              console.warn('Web geolocation error:', err);
+              Alert.alert('Location Error', 'Unable to fetch location on web.');
+            }
+          );
+        } else {
+          console.warn('Geolocation not supported in this browser');
+          Alert.alert('Location Error', 'Geolocation not supported in browser.');
+        }
+      } else {
+        // Native apps
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.warn('Permission to access location was denied');
+          Alert.alert('Permission Denied', 'Cannot get location permission.');
+          return;
+        }
+        const loc = await Location.getCurrentPositionAsync({});
+        setLocation({
+          lat: loc.coords.latitude,
+          lng: loc.coords.longitude,
+        });
+        console.log('Native location set:', loc.coords);
+      }
+    }
+    fetchLocation();
+  }, []);
 
   const handlePost = async () => {
     if (!title || !description) {
@@ -28,10 +71,7 @@ export default function PostFavorScreen() {
       await addDoc(collection(db, 'favors'), {
         title,
         description,
-        location: {
-          lat: 43.6532,
-          lng: -79.3832,
-        },
+        location: location || null,
         createdAt: new Date(),
         status: 'open',
         postedBy: user?.email || 'unknown',
@@ -40,9 +80,7 @@ export default function PostFavorScreen() {
       Alert.alert('Success', 'Favor posted!');
       setTitle('');
       setDescription('');
-
-      //  Redirect to favor feed
-      router.replace('/favor'); 
+      router.replace('/favor'); // Redirect to favor feed screen
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'Could not post favor');
