@@ -1,11 +1,20 @@
+import { useRouter } from 'expo-router';
 import { addDoc, collection } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { db } from '../firebaseConfig';
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { auth, db } from '../firebaseConfig';
 
 export default function PostFavorScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const router = useRouter();
 
   const handlePost = async () => {
     if (!title || !description) {
@@ -14,6 +23,8 @@ export default function PostFavorScreen() {
     }
 
     try {
+      const user = auth.currentUser;
+
       await addDoc(collection(db, 'favors'), {
         title,
         description,
@@ -23,11 +34,15 @@ export default function PostFavorScreen() {
         },
         createdAt: new Date(),
         status: 'open',
-        postedBy: 'amna786@gmail.com', // Replace with actual user email if available
+        postedBy: user?.email || 'unknown',
       });
+
       Alert.alert('Success', 'Favor posted!');
       setTitle('');
       setDescription('');
+
+      //  Redirect to favor feed
+      router.replace('/favor'); 
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'Could not post favor');
@@ -61,13 +76,21 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   header: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
   input: {
-    borderWidth: 1, borderColor: '#ccc', borderRadius: 8,
-    padding: 12, marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
   },
   button: {
-    backgroundColor: '#300330', padding: 5, borderRadius: 5,
+    backgroundColor: '#300330',
+    padding: 12,
+    borderRadius: 5,
   },
   buttonText: {
-    color: '#fff', textAlign: 'center', fontSize: 16, fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
